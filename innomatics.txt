@@ -1,0 +1,46 @@
+import pandas as pd
+import os
+# Specify the directory containing the CSV files
+directory_path = "D:/Property_data"
+#list to store individual DataFrames
+dataframes=[]
+# Iterate through all CSV files in the directory
+for filename in os.listdir(directory_path):
+    if filename.endswith(".csv"):
+        file_path = os.path.join(directory_path, filename)
+        try:
+            # Read each CSV file
+            df = pd.read_csv(file_path, encoding='latin1', on_bad_lines='skip')
+            
+            # Standardize column names
+            df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+            
+            # Append to the list
+            dataframes.append(df)
+        except Exception as e:
+            print(f"Error reading file {filename}: {e}")
+# Concatenate all DataFrames
+final_df = pd.concat(dataframes, ignore_index=True)
+# Check for column inconsistencies
+print(final_df.columns.unique())
+final_df.rename(columns={"old_name": "new_name"}, inplace=True)
+df = pd.read_csv(file_path, delimiter=';', encoding='latin1')
+# Save to a new CSV file
+final_df.to_csv("final_combined_data.csv", index=False)
+# Check if 'photo_urls' is a string or list and clean accordingly
+def extract_photo_count(photo_urls):
+    if isinstance(photo_urls, str):
+        # If 'photo_urls' is a string, split by commas (or other delimiter if needed)
+        return len(photo_urls.split(',')) if photo_urls else 0
+    elif isinstance(photo_urls, list):
+        # If it's already a list, return the length of the list
+        return len(photo_urls)
+    else:
+        # If it's neither, return 0 (for invalid or empty entries)
+        return 0
+
+# Apply the function to the 'photo_urls' column to create 'photo_count' column
+final_df['photo_count'] = final_df['photo_urls'].apply(extract_photo_count)
+
+# Display the DataFrame to check the new 'photo_count' column
+print(final_df[['property_id', 'photo_urls', 'photo_count']].head())
